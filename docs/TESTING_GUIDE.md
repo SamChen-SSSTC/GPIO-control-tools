@@ -1,10 +1,15 @@
 # GPIO Transport Testing - Quick Reference
 
-## 🎯 Logic Convention (Both Modes)
+## 🎯 GPIO Logic (Direct Electrical Control)
 ```
-set_low()  = GPIO LOW  = Power ON  = LED ON
-set_high() = GPIO HIGH = Power OFF = LED OFF
+set_low()  = GPIO outputs 0V (LOW)
+set_high() = GPIO outputs 3.3V/5V (HIGH)
 ```
+
+**The effect on your device depends on your circuit:**
+- Active-low relay: LOW typically activates relay (powers device ON)
+- Active-high relay: HIGH typically activates relay (powers device ON)
+- LED configuration determines whether HIGH or LOW lights it up
 
 ## ⚡ Quick Tests
 
@@ -75,13 +80,14 @@ RPI_GPIO_PIN="23"
 
 ## 🐛 Troubleshooting
 
-### LED behavior is inverted
-→ Check relay type (active-HIGH vs active-LOW)
-→ Verify wiring: LED anode to GPIO, cathode to GND
+### GPIO behavior not as expected
+→ Verify your circuit type (active-low vs active-high relay/LED)
+→ Measure GPIO voltage with multimeter to confirm output
+→ Check wiring connections
 
 ### Modes behave differently
 → Run: `./test_gpio_transports.sh -c plp.conf`
-→ Check hardware: both should use same relay type
+→ Verify both modes output same electrical voltage (use multimeter)
 
 ### Aardvark not found
 → Run: `lsusb | grep "Total Phase"`

@@ -2,14 +2,20 @@
 
 ## Logic Convention
 
-Both RPI and Aardvark GPIO modes now follow the **same logic convention**:
+Both RPI and Aardvark GPIO modes now follow **direct electrical GPIO control**:
 
 ```
-set_low()  → GPIO LOW  → Power ON  (relay activated)
-set_high() → GPIO HIGH → Power OFF (relay deactivated)
+set_low()  → GPIO outputs LOW (0V)
+set_high() → GPIO outputs HIGH (3.3V/5V)
 ```
 
-This ensures **identical behavior** regardless of the transport method used.
+The actual effect on your connected device (relay, LED, etc.) depends on your circuit design:
+- **Active-low relay**: LOW activates relay (power ON), HIGH deactivates (power OFF)
+- **Active-high relay**: HIGH activates relay (power ON), LOW deactivates (power OFF)
+- **LED with pull-up**: LOW turns LED ON, HIGH turns LED OFF
+- **LED with pull-down**: HIGH turns LED ON, LOW turns LED OFF
+
+This ensures **identical electrical behavior** regardless of the transport method used.
 
 ---
 
@@ -17,19 +23,17 @@ This ensures **identical behavior** regardless of the transport method used.
 
 ### Raspberry Pi Mode
 - **Connection**: Network (SSH over TCP/IP)
-- **Hardware**: Raspberry Pi GPIO → Relay Module → Power
-- **Logic**: 
-  - GPIO LOW → Relay ON → Power ON
-  - GPIO HIGH → Relay OFF → Power OFF
-- **Inversion**: Built-in relay provides physical inversion
+- **Hardware**: Raspberry Pi GPIO → Relay/LED/Device
+- **Logic**: Direct electrical control
+  - GPIO LOW = 0V output
+  - GPIO HIGH = 3.3V output
 
 ### Aardvark Mode
 - **Connection**: USB Direct
-- **Hardware**: Aardvark GPIO → Relay/Control Circuit → Power
-- **Logic**: 
-  - GPIO LOW → Power ON
-  - GPIO HIGH → Power OFF
-- **Inversion**: Software handles matching RPI behavior
+- **Hardware**: Aardvark GPIO → Relay/LED/Device  
+- **Logic**: Direct electrical control
+  - GPIO LOW = 0V output
+  - GPIO HIGH = 3.3V/5V output
 
 ---
 
@@ -58,20 +62,26 @@ This ensures **identical behavior** regardless of the transport method used.
    ./test_led_visual.sh rpi
    ```
 
-### Expected LED Behavior
+### Expected Behavior
 
-With an LED connected to GPIO and GND:
+The GPIO output voltage depends on the command:
 
-| Command | GPIO State | LED State | Power State |
-|---------|-----------|-----------|-------------|
-| `set_low()` | LOW | ON (lit) | Power ON |
-| `set_high()` | HIGH | OFF (dark) | Power OFF |
+| Command | GPIO Output | Notes |
+|---------|------------|-------|
+| `set_low()` | 0V (LOW) | Effect depends on your circuit |
+| `set_high()` | 3.3V/5V (HIGH) | Effect depends on your circuit |
+
+**Common circuit behaviors:**
+- **Active-low relay + set_low()**: Relay activates (typically powers device ON)
+- **Active-low relay + set_high()**: Relay deactivates (typically powers device OFF)
+- **LED with current-limiting resistor to GND + set_low()**: LED OFF (no voltage difference)
+- **LED with current-limiting resistor to GND + set_high()**: LED ON (voltage drives current)
 
 ---
 
 ## Command Equivalence
 
-### Power ON
+### Set GPIO LOW (0V)
 ```bash
 # RPI Mode
 GPIO_MODE="rpi" ./gpio_on.sh -c plp.conf
@@ -83,7 +93,7 @@ GPIO_MODE="aardvark" ./gpio_on.sh -c plp.conf
 python3 lib/aardvark_gpio.py --port 0 --pin 0 --low
 ```
 
-### Power OFF
+### Set GPIO HIGH (3.3V/5V)
 ```bash
 # RPI Mode
 GPIO_MODE="rpi" ./gpio_off.sh -c plp.conf
@@ -95,7 +105,7 @@ GPIO_MODE="aardvark" ./gpio_off.sh -c plp.conf
 python3 lib/aardvark_gpio.py --port 0 --pin 0 --high
 ```
 
-### Power Cycle
+### GPIO Cycle (HIGH → LOW → HIGH)
 ```bash
 # RPI Mode
 GPIO_MODE="rpi" ./gpio_cycle.sh -c plp.conf 2000

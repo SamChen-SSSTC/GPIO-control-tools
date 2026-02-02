@@ -133,10 +133,10 @@ if [ ! -f "${PROJECT_ROOT}/lib/aardvark_gpio.py" ]; then
     exit 1
 fi
 
-# Power OFF
-print_info "Step 1: Power OFF (GPIO HIGH)"
+# Set GPIO HIGH
+print_info "Step 1: Set GPIO HIGH (3.3V/5V)"
 if ! bash "${SCRIPT_DIR}/gpio_off_aardvark.sh" -c "${CONFIG_FILE:-/dev/null}" 2>&1 | grep -v "^$"; then
-    print_error "Failed to power off device"
+    print_error "Failed to set GPIO HIGH"
     exit 1
 fi
 
@@ -145,12 +145,12 @@ WAIT_SEC=$(echo "scale=2; ${AARDVARK_POWER_OFF_MS} / 1000" | bc)
 print_info "Step 2: Waiting ${WAIT_SEC}s..."
 sleep "${WAIT_SEC}"
 
-# Power ON
-print_info "Step 3: Power ON (GPIO LOW)"
+# Set GPIO LOW
+print_info "Step 3: Set GPIO LOW (0V)"
 if ! bash "${SCRIPT_DIR}/gpio_on_aardvark.sh" -c "${CONFIG_FILE:-/dev/null}" 2>&1 | grep -v "^$"; then
-    print_error "Failed to power on device"
+    print_error "Failed to set GPIO LOW"
     exit 1
 fi
 
-print_info "✓ Power cycle completed successfully"
+print_info "✓ GPIO cycle completed successfully"
 exit 0

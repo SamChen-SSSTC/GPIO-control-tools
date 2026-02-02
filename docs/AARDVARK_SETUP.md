@@ -145,16 +145,16 @@ Use these scripts to explicitly control Aardvark GPIO:
 Control GPIO directly using Python:
 
 ```bash
-# Set GPIO HIGH (power OFF)
+# Set GPIO HIGH (~3.3V/5V)
 python3 aardvark_gpio.py --port 0 --pin 0 --high
 
-# Set GPIO LOW (power ON)
+# Set GPIO LOW (~0V)
 python3 aardvark_gpio.py --port 0 --pin 0 --low
 
 # Read GPIO state
 python3 aardvark_gpio.py --port 0 --pin 0 --get
 
-# Power cycle (2000ms)
+# GPIO cycle (2000ms)
 python3 aardvark_gpio.py --port 0 --pin 0 --cycle --duration 2000
 ```
 
@@ -172,10 +172,14 @@ Aardvark GND             → Relay Module GND
 Relay Module VCC         → External Power Supply (if needed)
 ```
 
-### GPIO Logic Levels (matching RPI behavior)
+### GPIO Logic Levels (Direct Electrical Output)
 
-- **GPIO HIGH (1)** = Power OFF (relay active)
-- **GPIO LOW (0)** = Power ON (relay inactive)
+- **GPIO HIGH** = Outputs ~3.3V/5V
+- **GPIO LOW** = Outputs ~0V
+
+The effect depends on your relay type:
+- **Active-low relay**: LOW activates relay, HIGH deactivates
+- **Active-high relay**: HIGH activates relay, LOW deactivates
 
 ---
 

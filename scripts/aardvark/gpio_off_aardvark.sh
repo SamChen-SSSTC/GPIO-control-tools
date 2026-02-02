@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #==============================================================================
-# Aardvark GPIO Power OFF Script
-# Controls GPIO on TotalPhase Aardvark adapter to turn power OFF
+# Aardvark GPIO Set HIGH Script
+# Controls GPIO on TotalPhase Aardvark adapter to set GPIO HIGH
 #
 # Usage:
 #   ./gpio_off_aardvark.sh -c plp.conf
@@ -96,11 +96,11 @@ if [ -n "$2" ]; then
 fi
 
 print_info "========================================"
-print_info "Aardvark GPIO Power OFF"
+print_info "Aardvark GPIO Control"
 print_info "========================================"
 print_info "Port: ${AARDVARK_PORT}"
 print_info "GPIO Pin: ${AARDVARK_GPIO_PIN}"
-print_info "Action: Set HIGH (power OFF)"
+print_info "Action: Set GPIO HIGH (3.3V/5V)"
 echo ""
 
 # PCIe remove before power off
@@ -161,9 +161,9 @@ if [ ! -f "${PROJECT_ROOT}/lib/aardvark_gpio.py" ]; then
 fi
 
 # Execute GPIO command
-print_info "Setting GPIO${AARDVARK_GPIO_PIN} HIGH (power OFF)..."
+print_info "Setting GPIO${AARDVARK_GPIO_PIN} to HIGH (3.3V/5V)..."
 if python3 "${PROJECT_ROOT}/lib/aardvark_gpio.py" --port "${AARDVARK_PORT}" --pin "${AARDVARK_GPIO_PIN}" --high; then
-    print_info "✓ GPIO${AARDVARK_GPIO_PIN} power-off sequence completed"
+    print_info "✓ GPIO${AARDVARK_GPIO_PIN} set to HIGH"
     
     # Verify device is gone
     print_info "Verifying device is powered off..."
@@ -183,6 +183,6 @@ if python3 "${PROJECT_ROOT}/lib/aardvark_gpio.py" --port "${AARDVARK_PORT}" --pi
         fi
     fi
 else
-    print_error "✗ Failed to execute GPIO${AARDVARK_GPIO_PIN} power-off sequence"
+    print_error "✗ Failed to set GPIO${AARDVARK_GPIO_PIN} to HIGH"
     exit 1
 fi

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 #==============================================================================
-# Aardvark GPIO Power ON Script
-# Controls GPIO on TotalPhase Aardvark adapter to turn power ON
+# Aardvark GPIO Set LOW Script
+# Controls GPIO on TotalPhase Aardvark adapter to set GPIO LOW
 #
 # Usage:
 #   ./gpio_on_aardvark.sh -c plp.conf
@@ -96,11 +96,11 @@ if [ -n "$2" ]; then
 fi
 
 print_info "========================================"
-print_info "Aardvark GPIO Power ON"
+print_info "Aardvark GPIO Control"
 print_info "========================================"
 print_info "Port: ${AARDVARK_PORT}"
 print_info "GPIO Pin: ${AARDVARK_GPIO_PIN}"
-print_info "Action: Set LOW (power ON)"
+print_info "Action: Set GPIO LOW (0V)"
 echo ""
 
 # Get script directory
@@ -125,11 +125,11 @@ if [ ! -f "${PROJECT_ROOT}/lib/aardvark_gpio.py" ]; then
 fi
 
 # Execute GPIO command
-print_info "Setting GPIO${AARDVARK_GPIO_PIN} LOW (power ON)..."
+print_info "Setting GPIO${AARDVARK_GPIO_PIN} to LOW (0V)..."
 if python3 "${PROJECT_ROOT}/lib/aardvark_gpio.py" --port "${AARDVARK_PORT}" --pin "${AARDVARK_GPIO_PIN}" --low; then
-    print_info "✓ GPIO${AARDVARK_GPIO_PIN} power-on sequence completed"
+    print_info "✓ GPIO${AARDVARK_GPIO_PIN} set to LOW"
 else
-    print_error "✗ Failed to execute GPIO${AARDVARK_GPIO_PIN} power-on sequence"
+    print_error "✗ Failed to set GPIO${AARDVARK_GPIO_PIN} to LOW"
     exit 1
 fi
 

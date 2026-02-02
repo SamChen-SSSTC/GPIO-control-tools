@@ -11,22 +11,24 @@ Requirements:
     - Install from: https://www.totalphase.com/products/aardvark-i2cspi/
 
 Hardware Setup:
-    - Connect Aardvark GPIO pin to power control circuit (relay/MOSFET)
+    - Connect Aardvark GPIO pin to power control circuit (relay/MOSFET/LED)
     
-Logic Convention (matches RPI relay behavior):
-    - set_low()  → GPIO LOW  → Power ON  (relay activated)
-    - set_high() → GPIO HIGH → Power OFF (relay deactivated)
+GPIO Logic (Direct Electrical Control):
+    - set_low()  → GPIO outputs LOW (0V)
+    - set_high() → GPIO outputs HIGH (3.3V or 5V)
     
-    This matches the RPI behavior where:
-    - RPI sends LOW → relay activates → power ON
-    - RPI sends HIGH → relay deactivates → power OFF
+    The actual effect depends on your circuit:
+    - For active-low relay: LOW = relay ON, HIGH = relay OFF
+    - For active-high relay: HIGH = relay ON, LOW = relay OFF  
+    - For LED with pull-up: LOW = LED ON, HIGH = LED OFF
+    - For LED with pull-down: HIGH = LED ON, LOW = LED OFF
     
 Usage:
     from aardvark_gpio import AardvarkGPIO
     
     gpio = AardvarkGPIO(port=0, pin=0)
-    gpio.set_low()   # Power ON
-    gpio.set_high()  # Power OFF
+    gpio.set_low()   # Set GPIO to LOW (0V)
+    gpio.set_high()  # Set GPIO to HIGH (3.3V/5V)
     gpio.close()
 """
 
@@ -142,45 +144,41 @@ class AardvarkGPIO:
         # aa_gpio_pullup enables internal pullup resistors
         aa.aa_gpio_pullup(self.handle, 0x00)  # Disable pullups for cleaner output
         
-        # Initialize to LOW (LED OFF, Power OFF) to match RPI behavior at startup
+        # Initialize to LOW at startup
         current = aa.aa_gpio_get(self.handle)
-        new_value = current & ~self.pin_mask  # Set physical GPIO LOW
+        new_value = current & ~self.pin_mask  # Clear bit = physical GPIO LOW
         aa.aa_gpio_set(self.handle, new_value)
         
         self._log(f"Configured GPIO pin {self.pin_name} (pin {self.pin_num}) as output")
-        self._log(f"Initialized GPIO to LOW (LED OFF, Power OFF)")
+        self._log(f"Initialized GPIO to LOW (0V)")
     
     def set_high(self):
-        """Set GPIO pin HIGH (power OFF in our application)
+        """Set GPIO pin HIGH (outputs high voltage ~3.3V/5V)
         
-        Note: Physical GPIO inversion to match RPI relay behavior
-        - RPI: GPIO HIGH → relay OFF → power OFF → LED OFF
-        - Aardvark: Set physical GPIO LOW → LED OFF (inverted in software)
+        Sets the physical GPIO pin to HIGH state.
+        The actual effect on your circuit depends on how it's wired.
         """
-        # INVERTED: To turn power OFF, set physical GPIO LOW
-        current = aa.aa_gpio_get(self.handle)
-        new_value = current & ~self.pin_mask  # Clear bit = physical LOW
-        aa.aa_gpio_set(self.handle, new_value)
-        # Verify by reading back
-        actual = aa.aa_gpio_get(self.handle)
-        self._log(f"GPIO pin {self.pin_name} set HIGH (power OFF)")
-        self._log(f"  Physical GPIO: LOW, Before: 0x{current:02X}, After: 0x{actual:02X}, Pin mask: 0x{self.pin_mask:02X}")
-    
-    def set_low(self):
-        """Set GPIO pin LOW (power ON in our application)
-        
-        Note: Physical GPIO inversion to match RPI relay behavior
-        - RPI: GPIO LOW → relay ON → power ON → LED ON
-        - Aardvark: Set physical GPIO HIGH → LED ON (inverted in software)
-        """
-        # INVERTED: To turn power ON, set physical GPIO HIGH
         current = aa.aa_gpio_get(self.handle)
         new_value = current | self.pin_mask  # Set bit = physical HIGH
         aa.aa_gpio_set(self.handle, new_value)
         # Verify by reading back
         actual = aa.aa_gpio_get(self.handle)
-        self._log(f"GPIO pin {self.pin_name} set LOW (power ON)")
+        self._log(f"GPIO pin {self.pin_name} set HIGH")
         self._log(f"  Physical GPIO: HIGH, Before: 0x{current:02X}, After: 0x{actual:02X}, Pin mask: 0x{self.pin_mask:02X}")
+    
+    def set_low(self):
+        """Set GPIO pin LOW (outputs low voltage ~0V)
+        
+        Sets the physical GPIO pin to LOW state.
+        The actual effect on your circuit depends on how it's wired.
+        """
+        current = aa.aa_gpio_get(self.handle)
+        new_value = current & ~self.pin_mask  # Clear bit = physical LOW
+        aa.aa_gpio_set(self.handle, new_value)
+        # Verify by reading back
+        actual = aa.aa_gpio_get(self.handle)
+        self._log(f"GPIO pin {self.pin_name} set LOW")
+        self._log(f"  Physical GPIO: LOW, Before: 0x{current:02X}, After: 0x{actual:02X}, Pin mask: 0x{self.pin_mask:02X}")
     
     def get_state(self) -> bool:
         """Get current GPIO pin state
@@ -235,16 +233,16 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Set GPIO pin 0 HIGH (power on)
+  # Set GPIO pin 0 HIGH (outputs ~3.3V/5V)
   python3 aardvark_gpio.py --port 0 --pin 0 --high
   
-  # Set GPIO pin 0 LOW (power on)
+  # Set GPIO pin 0 LOW (outputs ~0V)
   python3 aardvark_gpio.py --port 0 --pin 0 --low
   
   # Read GPIO pin state
   python3 aardvark_gpio.py --port 0 --pin 0 --get
   
-  # Power cycle (high -> low -> high)
+  # Toggle cycle (high -> low -> high)
   python3 aardvark_gpio.py --port 0 --pin 0 --cycle --duration 2000
         """
     )
@@ -258,13 +256,13 @@ Examples:
     
     action_group = parser.add_mutually_exclusive_group(required=True)
     action_group.add_argument('--high', action='store_true',
-                              help='Set GPIO HIGH (power ON)')
+                              help='Set GPIO HIGH (~3.3V/5V)')
     action_group.add_argument('--low', action='store_true',
-                              help='Set GPIO LOW (power OFF)')
+                              help='Set GPIO LOW (~0V)')
     action_group.add_argument('--get', action='store_true',
                               help='Get GPIO state')
     action_group.add_argument('--cycle', action='store_true',
-                              help='Power cycle (HIGH -> LOW -> HIGH)')
+                              help='GPIO cycle (HIGH -> LOW -> HIGH)')
     
     parser.add_argument('--duration', type=int, default=2000,
                         help='Duration in ms for cycle command (default: 2000)')
@@ -287,13 +285,13 @@ Examples:
                 state = gpio.get_state()
                 print(f"GPIO {gpio.pin_name} is {'HIGH' if state else 'LOW'}")
             elif args.cycle:
-                print(f"Power cycling: OFF -> ON ({args.duration}ms) -> OFF")
-                gpio.set_high()  # OFF
+                print(f"GPIO cycling: HIGH -> LOW ({args.duration}ms) -> HIGH")
+                gpio.set_high()  # HIGH
                 time.sleep(0.5)
-                gpio.set_low()   # ON
+                gpio.set_low()   # LOW
                 time.sleep(args.duration / 1000.0)
-                gpio.set_high()  # OFF
-                print("Power cycle complete")
+                gpio.set_high()  # HIGH
+                print("GPIO cycle complete")
     
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
