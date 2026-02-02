@@ -1,0 +1,54 @@
+# Firmware binaries
+*.bin
+*.dfw
+*.tim
+FclBin
+
+# Log files
+logs/
+*.log
+TraceLog_*/
+
+# SSH keys and credentials
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+.directory
+
+# Editor specific
+.vscode/
+.idea/
+*.code-workspace
+
+# Python cache (if any Python utilities are added)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configuration with sensitive data
+# Uncomment if you want to ignore local config files
+# plp.conf
+# *_local.conf
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Test results
+test_results/
+test_output/
+archives/
